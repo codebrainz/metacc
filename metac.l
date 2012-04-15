@@ -63,6 +63,7 @@ static void handle_comment(yyscan_t yyscanner);
 "const"    { MCINC; return MCTOK_CONST; }
 "continue" { MCINC; return MCTOK_CONTINUE; }
 "default"  { MCINC; return MCTOK_DEFAULT; }
+"delete"   { MCINC; return MCTOK_DELETE; }
 "do"       { MCINC; return MCTOK_DO; }
 "double"   { MCINC; return MCTOK_DOUBLE; }
 "else"     { MCINC; return MCTOK_ELSE; }
@@ -78,6 +79,7 @@ static void handle_comment(yyscan_t yyscanner);
 "int"      { MCINC; return MCTOK_INT; }
 "lambda"   { MCINC; return MCTOK_LAMBDA; }
 "long"     { MCINC; return MCTOK_LONG; }
+"new"      { MCINC; return MCTOK_NEW; }
 "return"   { MCINC; return MCTOK_RETURN; }
 "private"  { MCINC; return MCTOK_PRIVATE; }
 "public"   { MCINC; return MCTOK_PUBLIC; }
