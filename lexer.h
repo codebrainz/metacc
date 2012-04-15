@@ -80,11 +80,4 @@ void metac_lexer_reset(MetaCLexer *);
  */
 const MetaCToken *metac_lexer_next_token(MetaCLexer *);
 
-/*
- * Used internally by the scanner to update the address/position of the
- * current token. This really shouldn't be called outside of the scanning
- * function otherwise it will mess up the state of the current token.
- */
-void metac_lexer_increment(MetaCLexer *lexer);
-
 #endif /* METAC_LEXER_H_ */
