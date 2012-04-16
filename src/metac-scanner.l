@@ -33,26 +33,31 @@ P     ([Pp][+-]?{D}+)
 FS    (f|F|l|L)
 IS    ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
 
-%{
-#include "lexer.h"
-#include "token.h"
-
-static void increment_lexer(yyscan_t yyscanner);
-#define MCINC increment_lexer(yyscanner)
-static void handle_comment(yyscan_t yyscanner);
-%}
-
-%option noyylineno
 %option noyywrap
+%option yylineno
 %option reentrant
 %option nounput
-%option prefix="metac_scanner_"
-%option header-file="scanner.h"
+%option bison-bridge
+%option bison-locations
+%option prefix="metac_"
+
+%{
+
+#include "parser.h"
+
+#define YY_EXTRA_TYPE MetaCParser*
+#define YY_USER_ACTION yylloc->first_line = yylineno;
+
+static void comment(yyscan_t yyscanner);
+static long hex_to_long(const char *);
+
+#define MCINC {}
+%}
 
 %%
 
 "//"[^\n]* { MCINC; /* consume C++-style comments */ }
-"/*"       { MCINC; handle_comment(yyscanner); }
+"/*"       { MCINC; comment(yyscanner); }
 
 "bool"     { MCINC; return MCTOK_BOOL; }
 "break"    { MCINC; return MCTOK_BREAK; }
@@ -69,6 +74,7 @@ static void handle_comment(yyscan_t yyscanner);
 "else"     { MCINC; return MCTOK_ELSE; }
 "enum"     { MCINC; return MCTOK_ENUM; }
 "extern"   { MCINC; return MCTOK_EXTERN; }
+"false"    { MCINC; return MCTOK_FALSE; }
 "finally"  { MCINC; return MCTOK_FINALLY; }
 "float"    { MCINC; return MCTOK_FLOAT; }
 "for"      { MCINC; return MCTOK_FOR; }
@@ -80,27 +86,36 @@ static void handle_comment(yyscan_t yyscanner);
 "lambda"   { MCINC; return MCTOK_LAMBDA; }
 "long"     { MCINC; return MCTOK_LONG; }
 "new"      { MCINC; return MCTOK_NEW; }
+"null"     { MCINC; return MCTOK_NULL; }
 "return"   { MCINC; return MCTOK_RETURN; }
 "private"  { MCINC; return MCTOK_PRIVATE; }
 "public"   { MCINC; return MCTOK_PUBLIC; }
 "short"    { MCINC; return MCTOK_SHORT; }
-"signed"   { MCINC; return MCTOK_SIGNED; }
 "sizeof"   { MCINC; return MCTOK_SIZEOF; }
 "static"   { MCINC; return MCTOK_STATIC; }
 "struct"   { MCINC; return MCTOK_STRUCT; }
 "switch"   { MCINC; return MCTOK_SWITCH; }
 "throw"    { MCINC; return MCTOK_THROW; }
+"true"     { MCINC; return MCTOK_TRUE; }
 "try"      { MCINC; return MCTOK_TRY; }
 "typedef"  { MCINC; return MCTOK_TYPEDEF; }
+"typeof"   { MCINC; return MCTOK_TYPEOF; }
+"uchar"    { MCINC; return MCTOK_UCHAR; }
+"uint"     { MCINC; return MCTOK_UINT; }
+"ulong"    { MCINC; return MCTOK_ULONG; }
+"ushort"   { MCINC; return MCTOK_USHORT; }
 "union"    { MCINC; return MCTOK_UNION; }
-"unsigned" { MCINC; return MCTOK_UNSIGNED; }
 "var"      { MCINC; return MCTOK_VAR; }
 "void"     { MCINC; return MCTOK_VOID; }
 "while"    { MCINC; return MCTOK_WHILE; }
 
-{L}({L}|{D})* { MCINC; return MCTOK_IDENTIFIER; }
+{L}({L}|{D})* { MCINC;
+                strncpy(yylval->mc_string, yytext, yyleng);
+                return MCTOK_IDENTIFIER; }
 
-0[xX]{H}+{IS}?             { MCINC; return(MCTOK_CONSTANT); }
+0[xX]{H}+{IS}?             { MCINC; 
+                             yylval->mc_long = hex_to_long(yytext);
+                             return(MCTOK_CONSTANT); }
 0[0-7]*{IS}?               { MCINC; return(MCTOK_CONSTANT); }
 [1-9]{D}*{IS}?             { MCINC; return(MCTOK_CONSTANT); }
 L?'(\\.|[^\\'\n])+'        { MCINC; return(MCTOK_CONSTANT); }
@@ -165,49 +180,26 @@ L?\"(\\.|[^\\"\n])*\" { MCINC; return(MCTOK_STRING_LITERAL); }
 "?"        { MCINC; return('?'); }
 
 [ \t\v\n\f]   { MCINC; }
-.             { /* todo: dd code to complain about unmatched characters */ }
+.             { /* todo: add code to complain about unmatched characters */ }
 
 %%
 
-static void increment_lexer(yyscan_t yyscanner)
+static long hex_to_long(const char *s)
 {
-  MetaCLexer *lexer;
-
-  lexer = (MetaCLexer*) metac_scanner_get_extra(yyscanner);
-  if (lexer) {
-    int len;
-    char *txt;
-
-    len = metac_scanner_get_leng(yyscanner);
-    txt = metac_scanner_get_text(yyscanner);
-
-    lexer->address.offset += len;
-
-    if (txt[0] == '\n') {
-      lexer->address.lineNum++;
-      lexer->address.column = 0;
-    } else {
-      lexer->address.column += len;
-    }
+  long l;
+  errno = 0;
+  l = strtol(s, NULL, 16);
+  if (errno == 0) {
+    return l;
   }
+  metac_error("failed to convert hex to long\n");
 }
 
-static void handle_comment(yyscan_t yyscanner)
+static void comment(yyscan_t yyscanner)
 {
-  MetaCLexer *lexer;
   int c, prev = 0;
 
-  lexer = metac_scanner_get_extra(yyscanner);
-
   while ((c = input(yyscanner)) != 0) {
-
-    lexer->address.offset++;
-    if (c == '\n') {
-      lexer->address.lineNum++;
-      lexer->address.column = 0;
-    } else {
-      lexer->address.column++;
-    }
 
     if (prev == '*' && c == '/') {
       return;
@@ -215,36 +207,5 @@ static void handle_comment(yyscan_t yyscanner)
 
     prev = c;
   }
-  /* once parser is working:
-       error("Unterminated comment"); */
+  metac_error("unterminated comment");
 }
-
-#if 0
-static void handle_triple_string(yyscan_t yyscanner)
-{
-  MetaCLexer *lexer;
-  int c, prev = 0, beforeThat = 0;
-
-  lexer = metac_scanner_get_extra(yyscanner);
-
-  while ((c = input(yyscanner)) != 0) {
-    lexer->address.offset++;
-    if (c == '\n') {
-      lexer->address.lineNum++;
-      lexer->address.column = 0;
-    } else {
-      lexer->address.column++;
-    }
-
-    if (beforeThat == '"' && prev == '"' && c == '"') {
-      /* part of the string literal */
-    }
-
-    beforeThat = prev;
-    prev = c;
-  }
-  /* once parser is working:
-        error("Unterminated triple-quoted string literal"); */
-}
-#endif
-

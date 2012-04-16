@@ -24,13 +24,42 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "token.h"
+#ifndef METAC_PARSER_H
+#define METAC_PARSER_H 1
 
-void metac_token_reset(MetaCToken *tok)
-{
-  if (tok) {
-    tok->type = MCTOK_EOF;
-    tok->text[0] = '\0';
-  }
-}
+#include <limits.h> /* for PATH_MAX */
+#include <stdio.h>  /* for FILE */
+#include "gen-parser.h"
+
+typedef struct {
+
+  char fn[PATH_MAX];
+
+  struct {
+    int line;
+    int column;
+    int offset;
+  } addr;
+
+  void *scanner;
+  FILE *fp;
+
+} MetaCParser;
+
+MetaCParser *metac_parser_open(const char *fn);
+void metac_parser_close(MetaCParser *parser);
+
+#endif /* METAC_PARSER_H */
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -25,34 +25,50 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
+#include <stdio.h>
+#include "parser.h"
 
-#include "lexer.h"
-#include "token.h"
-
-static void debug(const MetaCLexer *lexer, const MetaCToken *tok)
+MetaCParser *metac_parser_open(const char *fn)
 {
-	printf("Token %d: %s\n", tok->type, tok->text);
-	//printf("Lexer Position: %d, Line: %d, Column: %d\n",
-	//	lexer->address.offset, lexer->address.lineNum,
-	//	lexer->address.column);
+  FILE *fp;
+  MetaCParser *parser = NULL;
+
+  if (fn) {
+    fp = fopen(fn, "r");
+  } else {
+    fp = stdin;
+  }
+
+  if (fp) {
+    parser = malloc(sizeof(MetaCParser));
+    if (parser) {
+
+      parser->addr.line = 0;
+      parser->addr.column = 0;
+      parser->addr.offset = 0;
+      parser->scanner = NULL;
+      parser->fp = fp;
+
+      if (fn) {
+        strncpy(parser->fn, fn, PATH_MAX);
+      } else {
+        parser->fn[0] = '\0';
+      }
+
+      metac_lex_init_extra(parser, &(parser->scanner));
+      metac_set_in(parser->fp, parser->scanner);
+    }
+  }
+
+  return parser;
 }
 
-int main(int argc, char *argv[])
+void metac_parser_close(MetaCParser *parser)
 {
-	const MetaCToken *tok;
-	MetaCLexer *lex = metac_lexer_open("test.mc");
-
-	if (lex) {
-		while (NULL != (tok = metac_lexer_next_token(lex))) {
-			debug(lex, tok);
-		}
-		metac_lexer_close(lex);
-	} else {
-		fprintf(stderr, "error: unable to create lexer for '%s'\n", "test.mc");
-		exit (EXIT_FAILURE);
-	}
-
-	return 0;
+  if (parser) {
+    metac_lex_destroy(parser->scanner);
+    fclose(parser->fp);
+    free(parser);
+  }
 }
