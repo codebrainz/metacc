@@ -24,51 +24,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
+#include <iostream>
+#include <fstream>
 #include "parser.h"
 
-MetaCParser *metac_parser_open(const char *fn)
+using namespace std;
+
+int main(int argc, char *argv[])
 {
-  FILE *fp;
-  MetaCParser *parser = NULL;
-
-  if (fn) {
-    fp = fopen(fn, "r");
-  } else {
-    fp = stdin;
-  }
-
-  if (fp) {
-    parser = malloc(sizeof(MetaCParser));
-    if (parser) {
-
-      parser->addr.line = 0;
-      parser->addr.column = 0;
-      parser->addr.offset = 0;
-      parser->scanner = NULL;
-      parser->fp = fp;
-
-      if (fn) {
-        strncpy(parser->fn, fn, PATH_MAX);
-      } else {
-        parser->fn[0] = '\0';
-      }
-
-      metac_lex_init_extra(parser, &(parser->scanner));
-      metac_set_in(parser->fp, parser->scanner);
-    }
-  }
-
-  return parser;
-}
-
-void metac_parser_close(MetaCParser *parser)
-{
-  if (parser) {
-    metac_lex_destroy(parser->scanner);
-    fclose(parser->fp);
-    free(parser);
-  }
+	cout << "Starting parsing..." << endl;
+	ifstream inStream("test.c", ifstream::in);
+	Parser parser(&inStream);
+	cout << "Created parsing context." << endl;
+	int rc = Parser_parse(&parser);
+	cout << "Parse result: " << rc << endl;
 }

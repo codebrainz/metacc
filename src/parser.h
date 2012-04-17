@@ -27,39 +27,34 @@
 #ifndef METAC_PARSER_H
 #define METAC_PARSER_H 1
 
-#include <limits.h> /* for PATH_MAX */
-#include <stdio.h>  /* for FILE */
-#include "gen-parser.h"
+#include <iostream>
 
-typedef struct {
+class Parser {
 
-  char fn[PATH_MAX];
-
-  struct {
-    int line;
-    int column;
-    int offset;
-  } addr;
-
+public:
+  int returnCode;
+  std::istream *inStream;
   void *scanner;
-  FILE *fp;
 
-} MetaCParser;
+public:
 
-MetaCParser *metac_parser_open(const char *fn);
-void metac_parser_close(MetaCParser *parser);
+  Parser(std::istream *is = &std::cin) {
+    this->inStream = is;
+    init_scanner();
+  }
+
+  ~Parser() {
+    destroy_scanner();
+  }
+
+protected:
+
+  /* Defined in metac-scanner.l */
+  void init_scanner();
+  void destroy_scanner();
+
+};
+
+int Parser_parse(Parser* context);
 
 #endif /* METAC_PARSER_H */
-
-
-
-
-
-
-
-
-
-
-
-
-

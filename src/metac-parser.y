@@ -25,58 +25,61 @@
  */
 
 %pure-parser
-%name-prefix="metac_"
+%name-prefix="Parser_"
 %locations
 %defines
 %error-verbose
-%parse-param { MetaCParser *context }
+%parse-param { Parser *context }
 %lex-param { void* scanner }
 %start translation_unit
 
 %union
 {
-	int mc_int;
-	long mc_long;
-	double mc_double;
-	char mc_string[4096];
+	char *string;
+	int token;
 }
 
-%token <mc_string> MCTOK_IDENTIFIER
-%token <mc_double> MCTOK_CONSTANT
-%token <mc_string> MCTOK_STRING_LITERAL
-%token MCTOK_SIZEOF MCTOK_TYPEOF
-%token MCTOK_PTR_OP MCTOK_INC_OP MCTOK_DEC_OP MCTOK_LEFT_OP MCTOK_RIGHT_OP
-%token MCTOK_LE_OP MCTOK_GE_OP MCTOK_EQ_OP MCTOK_NE_OP
-%token MCTOK_AND_OP MCTOK_OR_OP MCTOK_MUL_ASSIGN MCTOK_DIV_ASSIGN MCTOK_MOD_ASSIGN
-%token MCTOK_ADD_ASSIGN MCTOK_SUB_ASSIGN MCTOK_LEFT_ASSIGN MCTOK_RIGHT_ASSIGN MCTOK_AND_ASSIGN
-%token MCTOK_XOR_ASSIGN MCTOK_OR_ASSIGN MCTOK_TYPE_NAME
-
-%token MCTOK_TYPEDEF MCTOK_EXTERN MCTOK_STATIC MCTOK_INLINE MCTOK_LAMBDA
-%token MCTOK_PRIVATE MCTOK_PUBLIC MCTOK_VAR
-%token MCTOK_CHAR MCTOK_SHORT MCTOK_INT MCTOK_LONG MCTOK_UCHAR MCTOK_USHORT MCTOK_UINT MCTOK_ULONG
-%token MCTOK_BOOL MCTOK_FLOAT MCTOK_DOUBLE MCTOK_CONST MCTOK_VOID
-%token MCTOK_CATCH MCTOK_THROW MCTOK_TRY MCTOK_FINALLY
-%token MCTOK_CLASS MCTOK_STRUCT MCTOK_UNION MCTOK_ENUM MCTOK_ELLIPSIS
-%token MCTOK_NULL MCTOK_TRUE MCTOK_FALSE
-%token MCTOK_NEW MCTOK_DELETE
-
-%token MCTOK_CASE MCTOK_DEFAULT MCTOK_IF MCTOK_ELSE MCTOK_SWITCH MCTOK_WHILE MCTOK_DO
-%token MCTOK_FOR MCTOK_FOREACH MCTOK_GOTO MCTOK_CONTINUE MCTOK_BREAK MCTOK_RETURN
+%token <string> MCTOK_IDENTIFIER
+%token <double> MCTOK_CONSTANT
+%token <string> MCTOK_STRING_LITERAL
+%token <token>  MCTOK_SIZEOF MCTOK_TYPEOF
+%token <token>  MCTOK_PTR_OP MCTOK_INC_OP MCTOK_DEC_OP
+%token <token>  MCTOK_LEFT_OP MCTOK_RIGHT_OP
+%token <token>  MCTOK_LE_OP MCTOK_GE_OP MCTOK_EQ_OP MCTOK_NE_OP
+%token <token>  MCTOK_AND_OP MCTOK_OR_OP
+%token <token>  MCTOK_MUL_ASSIGN MCTOK_DIV_ASSIGN MCTOK_MOD_ASSIGN
+%token <token>  MCTOK_ADD_ASSIGN MCTOK_SUB_ASSIGN
+%token <token>  MCTOK_LEFT_ASSIGN MCTOK_RIGHT_ASSIGN
+%token <token>  MCTOK_AND_ASSIGN MCTOK_XOR_ASSIGN MCTOK_OR_ASSIGN
+%token <token>  MCTOK_TYPE_NAME
+%token <token>  MCTOK_TYPEDEF MCTOK_EXTERN MCTOK_STATIC MCTOK_INLINE
+%token <token>  MCTOK_LAMBDA MCTOK_VAR
+%token <token>  MCTOK_PRIVATE MCTOK_PUBLIC
+%token <token>  MCTOK_CHAR MCTOK_SHORT MCTOK_INT MCTOK_LONG
+%token <token>  MCTOK_UCHAR MCTOK_USHORT MCTOK_UINT MCTOK_ULONG
+%token <token>  MCTOK_BOOL MCTOK_FLOAT MCTOK_DOUBLE
+%token <token>  MCTOK_CONST MCTOK_VOID
+%token <token>  MCTOK_CATCH MCTOK_THROW MCTOK_TRY MCTOK_FINALLY
+%token <token>  MCTOK_CLASS MCTOK_STRUCT MCTOK_UNION MCTOK_ENUM
+%token <token>  MCTOK_ELLIPSIS
+%token <token>  MCTOK_NULL MCTOK_TRUE MCTOK_FALSE
+%token <token>  MCTOK_NEW MCTOK_DELETE
+%token <token>  MCTOK_SWITCH MCTOK_CASE MCTOK_DEFAULT
+%token <token>  MCTOK_IF MCTOK_ELSE 
+%token <token>  MCTOK_WHILE MCTOK_DO MCTOK_FOR MCTOK_FOREACH
+%token <token>  MCTOK_GOTO MCTOK_CONTINUE MCTOK_BREAK MCTOK_RETURN
 
 %{
 
-#include <stdio.h>
+#include <iostream>
+#include <sstream>
 #include "parser.h"
 
-//int metac_lex(YYSTYPE* lvalp, YYLTYPE* llocp, void* scanner);
+int Parser_lex(YYSTYPE* lvalp, YYLTYPE* llocp, void* scanner);
 
-void metac_error(YYLTYPE* locp, MetaCParser* context, const char* err)
+void Parser_error(YYLTYPE* locp, Parser* context, const char* err)
 {
-	if (context->fn[0] == '\0') {
-		fprintf(stderr, "metac:%d: %s\n", locp->first_line, err);
-	} else {
-		fprintf(stderr, "metac:%s:%d: %s\n", context->fn, locp->first_line, err);
-	}
+	std::cout << "metac:" << locp->first_line << ": " << err << std::endl;
 }
 
 #define scanner context->scanner

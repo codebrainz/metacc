@@ -39,25 +39,44 @@ IS    ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
 %option nounput
 %option bison-bridge
 %option bison-locations
-%option prefix="metac_"
+%option prefix="Parser_"
+%option always-interactive
 
 %{
 
 #include "parser.h"
-
-#define YY_EXTRA_TYPE MetaCParser*
+#include "gen-parser.h"
+#include <cstdio>
+#define YY_EXTRA_TYPE Parser*
 #define YY_USER_ACTION yylloc->first_line = yylineno;
 
-static void comment(yyscan_t yyscanner);
-static long hex_to_long(const char *);
+#define YY_INPUT(buf, result, max_size) \
+{ \
+  char c; \
+  (*yyextra->inStream) >> c; \
+  if(yyextra->inStream->eof()) { \
+     result = YY_NULL; \
+  } else { \
+     buf[0] = c; \
+     result = 1; \
+     printf("Char Is: %c\n", c); \
+     fflush(stdout); \
+  } \
+}
 
+static void comment(yyscan_t yyscanner);
+static char *copy_string(const char *s);
+
+#define MCSETSTR yylval->string = copy_string(yytext)
 #define MCINC {}
+
 %}
 
 %%
 
 "//"[^\n]* { MCINC; /* consume C++-style comments */ }
 "/*"       { MCINC; comment(yyscanner); }
+^"#"[^\n]  { MCINC; /* consume #pragma, #line, etc. */ }
 
 "bool"     { MCINC; return MCTOK_BOOL; }
 "break"    { MCINC; return MCTOK_BREAK; }
@@ -109,28 +128,24 @@ static long hex_to_long(const char *);
 "void"     { MCINC; return MCTOK_VOID; }
 "while"    { MCINC; return MCTOK_WHILE; }
 
-{L}({L}|{D})* { MCINC;
-                strncpy(yylval->mc_string, yytext, yyleng);
-                return MCTOK_IDENTIFIER; }
+{L}({L}|{D})* { MCINC; MCSETSTR; return MCTOK_IDENTIFIER; }
 
-0[xX]{H}+{IS}?             { MCINC; 
-                             yylval->mc_long = hex_to_long(yytext);
-                             return(MCTOK_CONSTANT); }
-0[0-7]*{IS}?               { MCINC; return(MCTOK_CONSTANT); }
-[1-9]{D}*{IS}?             { MCINC; return(MCTOK_CONSTANT); }
-L?'(\\.|[^\\'\n])+'        { MCINC; return(MCTOK_CONSTANT); }
+0[xX]{H}+{IS}?             { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
+0[0-7]*{IS}?               { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
+[1-9]{D}*{IS}?             { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
+L?'(\\.|[^\\'\n])+'        { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
 
-{D}+{E}{FS}?               { MCINC; return(MCTOK_CONSTANT); }
-{D}*"."{D}+{E}?{FS}?       { MCINC; return(MCTOK_CONSTANT); }
-{D}+"."{D}*{E}?{FS}?       { MCINC; return(MCTOK_CONSTANT); }
-0[xX]{H}+{P}{FS}?          { MCINC; return(MCTOK_CONSTANT); }
-0[xX]{H}*"."{H}+{P}?{FS}?  { MCINC; return(MCTOK_CONSTANT); }
-0[xX]{H}+"."{H}*{P}?{FS}?  { MCINC; return(MCTOK_CONSTANT); }
-0[bB]{B}+{P}{FS}?          { MCINC; return(MCTOK_CONSTANT); }
-0[bB]{B}*"."{B}+{P}?{FS}?  { MCINC; return(MCTOK_CONSTANT); }
-0[bB]{B}+"."{B}*{P}?{FS}?  { MCINC; return(MCTOK_CONSTANT); }
+{D}+{E}{FS}?               { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
+{D}*"."{D}+{E}?{FS}?       { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
+{D}+"."{D}*{E}?{FS}?       { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
+0[xX]{H}+{P}{FS}?          { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
+0[xX]{H}*"."{H}+{P}?{FS}?  { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
+0[xX]{H}+"."{H}*{P}?{FS}?  { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
+0[bB]{B}+{P}{FS}?          { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
+0[bB]{B}*"."{B}+{P}?{FS}?  { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
+0[bB]{B}+"."{B}*{P}?{FS}?  { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
 
-L?\"(\\.|[^\\"\n])*\" { MCINC; return(MCTOK_STRING_LITERAL); }
+L?\"(\\.|[^\\"\n])*\" { MCINC; MCSETSTR; return(MCTOK_STRING_LITERAL); }
 
 "..."      { MCINC; return MCTOK_ELLIPSIS; }
 ">>="      { MCINC; return MCTOK_RIGHT_ASSIGN; }
@@ -184,22 +199,22 @@ L?\"(\\.|[^\\"\n])*\" { MCINC; return(MCTOK_STRING_LITERAL); }
 
 %%
 
-static long hex_to_long(const char *s)
+static char *copy_string(const char *s)
 {
-  long l;
-  errno = 0;
-  l = strtol(s, NULL, 16);
-  if (errno == 0) {
-    return l;
+  char *newS = NULL;
+  if (s) {
+    size_t len = strlen(s);
+    newS = (char*) malloc(len+1);
+    strncpy(newS, s, len+1);
   }
-  metac_error("failed to convert hex to long\n");
+  return newS;
 }
 
 static void comment(yyscan_t yyscanner)
 {
   int c, prev = 0;
 
-  while ((c = input(yyscanner)) != 0) {
+  while ((c = yyinput(yyscanner)) != 0) {
 
     if (prev == '*' && c == '/') {
       return;
@@ -207,5 +222,15 @@ static void comment(yyscan_t yyscanner)
 
     prev = c;
   }
-  metac_error("unterminated comment");
+  /* fixme: Parser_error("unterminated comment"); */
+}
+
+void Parser::init_scanner()
+{
+  yylex_init_extra(this, &scanner);
+}
+
+void Parser::destroy_scanner()
+{
+  yylex_destroy(scanner);
 }

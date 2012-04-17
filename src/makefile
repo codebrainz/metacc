@@ -2,7 +2,7 @@
 # Make file for Meta C lexer
 #
 
-CC = cc
+CC = g++
 LEX = flex
 YACC = bison
 
@@ -24,7 +24,7 @@ else
 	link_flags = -ll -ly
 endif
 
-sources = $(wildcard *.c) gen-scanner.c gen-parser.c
+sources = $(wildcard *.c) $(wildcard *.cpp) gen-scanner.c gen-parser.c
 headers = $(wildcard *.h) gen-parser.h
 
 metacc: $(sources) $(headers)
