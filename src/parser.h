@@ -32,7 +32,6 @@
 class Parser {
 
 public:
-  int returnCode;
   std::istream *inStream;
   void *scanner;
 

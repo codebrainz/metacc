@@ -24,22 +24,22 @@ else
 	link_flags = -ll -ly
 endif
 
-sources = $(wildcard *.c) $(wildcard *.cpp) gen-scanner.c gen-parser.c
-headers = $(wildcard *.h) gen-parser.h
+sources = $(wildcard *.cpp) gen-scanner.cpp gen-parser.cpp
+headers = $(wildcard *.h) gen-parser.hpp
 
 metacc: $(sources) $(headers)
 	$(CC) $(debug_flags) -o $@ $(compile_flags) $^ $(link_flags)
 
-gen-scanner.c: metac-scanner.l
+gen-scanner.cpp: metac-scanner.l
 	$(LEX) -o $@ $<
 
-gen-parser.h: gen-parser.c
+gen-parser.hpp: gen-parser.cpp
 
-gen-parser.c: metac-parser.y
+gen-parser.cpp: metac-parser.y
 	$(YACC) -o $@ $<
 
 clean:
-	rm -f metac-lexer gen-*.[ch] *.o
+	rm -f metac-lexer gen-*.cpp gen-*.hpp *.o
 	rm -rf *.dSYM
 
 .PHONY: clean

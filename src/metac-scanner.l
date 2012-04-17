@@ -45,8 +45,8 @@ IS    ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
 %{
 
 #include "parser.h"
-#include "gen-parser.h"
-#include <cstdio>
+#include "gen-parser.hpp"
+
 #define YY_EXTRA_TYPE Parser*
 #define YY_USER_ACTION yylloc->first_line = yylineno;
 
@@ -59,8 +59,6 @@ IS    ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
   } else { \
      buf[0] = c; \
      result = 1; \
-     printf("Char Is: %c\n", c); \
-     fflush(stdout); \
   } \
 }
 
