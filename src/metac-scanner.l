@@ -45,6 +45,7 @@ IS    ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
 
 #include <string>
 #include "parser.h"
+#include "ast.h"
 #include "gen-parser.hh"
 
 #define YY_EXTRA_TYPE Parser*
@@ -61,150 +62,137 @@ IS    ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
 }
 
 static void comment(yyscan_t yyscanner);
-static char *cpstr(const char *s);
 
-#define MCSETSTR yylval->strval = cpstr(yytext)
-#define MCINC {}
+#define MCSETSTR yylval->string = new std::string(yytext)
 
 %}
 
 %%
 
-"//"[^\n]* { MCINC; /* consume C++-style comments */ }
-"/*"       { MCINC; comment(yyscanner); }
-^"#"[^\n]+ { MCINC; /* consume directives */ }
+"//"[^\n]* { /* consume C++-style comments */ }
+"/*"       { comment(yyscanner); }
+^"#"[^\n]+ { /* consume directives */ }
 
-"bool"     { MCINC; return MCTOK_BOOL; }
-"break"    { MCINC; return MCTOK_BREAK; }
-"case"     { MCINC; return MCTOK_CASE; }
-"catch"    { MCINC; return MCTOK_CATCH; }
-"char"     { MCINC; return MCTOK_CHAR; }
-"class"    { MCINC; return MCTOK_CLASS; }
-"const"    { MCINC; return MCTOK_CONST; }
-"continue" { MCINC; return MCTOK_CONTINUE; }
-"default"  { MCINC; return MCTOK_DEFAULT; }
-"delete"   { MCINC; return MCTOK_DELETE; }
-"do"       { MCINC; return MCTOK_DO; }
-"double"   { MCINC; return MCTOK_DOUBLE; }
-"else"     { MCINC; return MCTOK_ELSE; }
-"enum"     { MCINC; return MCTOK_ENUM; }
-"extern"   { MCINC; return MCTOK_EXTERN; }
-"false"    { MCINC; return MCTOK_FALSE; }
-"finally"  { MCINC; return MCTOK_FINALLY; }
-"float"    { MCINC; return MCTOK_FLOAT; }
-"for"      { MCINC; return MCTOK_FOR; }
-"foreach"  { MCINC; return MCTOK_FOREACH; }
-"goto"     { MCINC; return MCTOK_GOTO; }
-"if"       { MCINC; return MCTOK_IF; }
-"inline"   { MCINC; return MCTOK_INLINE; }
-"int"      { MCINC; return MCTOK_INT; }
-"lambda"   { MCINC; return MCTOK_LAMBDA; }
-"long"     { MCINC; return MCTOK_LONG; }
-"new"      { MCINC; return MCTOK_NEW; }
-"null"     { MCINC; return MCTOK_NULL; }
-"return"   { MCINC; return MCTOK_RETURN; }
-"private"  { MCINC; return MCTOK_PRIVATE; }
-"public"   { MCINC; return MCTOK_PUBLIC; }
-"short"    { MCINC; return MCTOK_SHORT; }
-"sizeof"   { MCINC; return MCTOK_SIZEOF; }
-"static"   { MCINC; return MCTOK_STATIC; }
-"struct"   { MCINC; return MCTOK_STRUCT; }
-"switch"   { MCINC; return MCTOK_SWITCH; }
-"throw"    { MCINC; return MCTOK_THROW; }
-"true"     { MCINC; return MCTOK_TRUE; }
-"try"      { MCINC; return MCTOK_TRY; }
-"typedef"  { MCINC; return MCTOK_TYPEDEF; }
-"typeof"   { MCINC; return MCTOK_TYPEOF; }
-"uchar"    { MCINC; return MCTOK_UCHAR; }
-"uint"     { MCINC; return MCTOK_UINT; }
-"ulong"    { MCINC; return MCTOK_ULONG; }
-"ushort"   { MCINC; return MCTOK_USHORT; }
-"union"    { MCINC; return MCTOK_UNION; }
-"var"      { MCINC; return MCTOK_VAR; }
-"void"     { MCINC; return MCTOK_VOID; }
-"while"    { MCINC; return MCTOK_WHILE; }
+"bool"     { return TOK_BOOL; }
+"break"    { return TOK_BREAK; }
+"case"     { return TOK_CASE; }
+"catch"    { return TOK_CATCH; }
+"char"     { return TOK_CHAR; }
+"class"    { return TOK_CLASS; }
+"const"    { return TOK_CONST; }
+"continue" { return TOK_CONTINUE; }
+"default"  { return TOK_DEFAULT; }
+"delete"   { return TOK_DELETE; }
+"do"       { return TOK_DO; }
+"double"   { return TOK_DOUBLE; }
+"else"     { return TOK_ELSE; }
+"enum"     { return TOK_ENUM; }
+"extern"   { return TOK_EXTERN; }
+"false"    { return TOK_FALSE; }
+"finally"  { return TOK_FINALLY; }
+"float"    { return TOK_FLOAT; }
+"for"      { return TOK_FOR; }
+"foreach"  { return TOK_FOREACH; }
+"goto"     { return TOK_GOTO; }
+"if"       { return TOK_IF; }
+"inline"   { return TOK_INLINE; }
+"int"      { return TOK_INT; }
+"lambda"   { return TOK_LAMBDA; }
+"long"     { return TOK_LONG; }
+"new"      { return TOK_NEW; }
+"null"     { return TOK_NULL; }
+"return"   { return TOK_RETURN; }
+"private"  { return TOK_PRIVATE; }
+"public"   { return TOK_PUBLIC; }
+"short"    { return TOK_SHORT; }
+"sizeof"   { return TOK_SIZEOF; }
+"static"   { return TOK_STATIC; }
+"struct"   { return TOK_STRUCT; }
+"switch"   { return TOK_SWITCH; }
+"throw"    { return TOK_THROW; }
+"true"     { return TOK_TRUE; }
+"try"      { return TOK_TRY; }
+"typedef"  { return TOK_TYPEDEF; }
+"typeof"   { return TOK_TYPEOF; }
+"uchar"    { return TOK_UCHAR; }
+"uint"     { return TOK_UINT; }
+"ulong"    { return TOK_ULONG; }
+"ushort"   { return TOK_USHORT; }
+"union"    { return TOK_UNION; }
+"var"      { return TOK_VAR; }
+"void"     { return TOK_VOID; }
+"while"    { return TOK_WHILE; }
 
-{L}({L}|{D})* { MCINC; MCSETSTR; return MCTOK_IDENTIFIER; }
+{L}({L}|{D})* { MCSETSTR; return TOK_IDENTIFIER; }
 
-0[xX]{H}+{IS}?             { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
-0[0-7]*{IS}?               { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
-[1-9]{D}*{IS}?             { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
-L?'(\\.|[^\\'\n])+'        { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
+0[xX]{H}+{IS}?             { MCSETSTR; return(TOK_CONSTANT); }
+0[0-7]*{IS}?               { MCSETSTR; return(TOK_CONSTANT); }
+[1-9]{D}*{IS}?             { MCSETSTR; return(TOK_CONSTANT); }
+L?'(\\.|[^\\'\n])+'        { MCSETSTR; return(TOK_CONSTANT); }
 
-{D}+{E}{FS}?               { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
-{D}*"."{D}+{E}?{FS}?       { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
-{D}+"."{D}*{E}?{FS}?       { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
-0[xX]{H}+{P}{FS}?          { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
-0[xX]{H}*"."{H}+{P}?{FS}?  { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
-0[xX]{H}+"."{H}*{P}?{FS}?  { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
-0[bB]{B}+{P}{FS}?          { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
-0[bB]{B}*"."{B}+{P}?{FS}?  { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
-0[bB]{B}+"."{B}*{P}?{FS}?  { MCINC; MCSETSTR; return(MCTOK_CONSTANT); }
+{D}+{E}{FS}?               { MCSETSTR; return(TOK_CONSTANT); }
+{D}*"."{D}+{E}?{FS}?       { MCSETSTR; return(TOK_CONSTANT); }
+{D}+"."{D}*{E}?{FS}?       { MCSETSTR; return(TOK_CONSTANT); }
+0[xX]{H}+{P}{FS}?          { MCSETSTR; return(TOK_CONSTANT); }
+0[xX]{H}*"."{H}+{P}?{FS}?  { MCSETSTR; return(TOK_CONSTANT); }
+0[xX]{H}+"."{H}*{P}?{FS}?  { MCSETSTR; return(TOK_CONSTANT); }
+0[bB]{B}+{P}{FS}?          { MCSETSTR; return(TOK_CONSTANT); }
+0[bB]{B}*"."{B}+{P}?{FS}?  { MCSETSTR; return(TOK_CONSTANT); }
+0[bB]{B}+"."{B}*{P}?{FS}?  { MCSETSTR; return(TOK_CONSTANT); }
 
-L?\"(\\.|[^\\"\n])*\" { MCINC; MCSETSTR; return(MCTOK_STRING_LITERAL); }
+L?\"(\\.|[^\\"\n])*\" { MCSETSTR; return(TOK_STRING_LITERAL); }
 
-"..."      { MCINC; return MCTOK_ELLIPSIS; }
-">>="      { MCINC; return MCTOK_RIGHT_ASSIGN; }
-"<<="      { MCINC; return MCTOK_LEFT_ASSIGN; }
-"+="       { MCINC; return MCTOK_ADD_ASSIGN; }
-"-="       { MCINC; return MCTOK_SUB_ASSIGN; }
-"*="       { MCINC; return MCTOK_MUL_ASSIGN; }
-"/="       { MCINC; return MCTOK_DIV_ASSIGN; }
-"%="       { MCINC; return MCTOK_MOD_ASSIGN; }
-"&="       { MCINC; return MCTOK_AND_ASSIGN; }
-"^="       { MCINC; return MCTOK_XOR_ASSIGN; }
-"|="       { MCINC; return MCTOK_OR_ASSIGN; }
-">>"       { MCINC; return MCTOK_RIGHT_OP; }
-"<<"       { MCINC; return MCTOK_LEFT_OP; }
-"++"       { MCINC; return MCTOK_INC_OP; }
-"--"       { MCINC; return MCTOK_DEC_OP; }
-"->"       { MCINC; return MCTOK_PTR_OP; }
-"&&"       { MCINC; return MCTOK_AND_OP; }
-"||"       { MCINC; return MCTOK_OR_OP; }
-"<="       { MCINC; return MCTOK_LE_OP; }
-">="       { MCINC; return MCTOK_GE_OP; }
-"=="       { MCINC; return MCTOK_EQ_OP; }
-"!="       { MCINC; return MCTOK_NE_OP; }
-";"        { MCINC; return(';'); }
-("{"|"<%") { MCINC; return('{'); }
-("}"|"%>") { MCINC; return('}'); }
-","        { MCINC; return(','); }
-":"        { MCINC; return(':'); }
-"="        { MCINC; return('='); }
-"("        { MCINC; return('('); }
-")"        { MCINC; return(')'); }
-("["|"<:") { MCINC; return('['); }
-("]"|":>") { MCINC; return(']'); }
-"."        { MCINC; return('.'); }
-"&"        { MCINC; return('&'); }
-"!"        { MCINC; return('!'); }
-"~"        { MCINC; return('~'); }
-"-"        { MCINC; return('-'); }
-"+"        { MCINC; return('+'); }
-"*"        { MCINC; return('*'); }
-"/"        { MCINC; return('/'); }
-"%"        { MCINC; return('%'); }
-"<"        { MCINC; return('<'); }
-">"        { MCINC; return('>'); }
-"^"        { MCINC; return('^'); }
-"|"        { MCINC; return('|'); }
-"?"        { MCINC; return('?'); }
+"..."      { return TOK_ELLIPSIS; }
+">>="      { return TOK_RIGHT_ASSIGN; }
+"<<="      { return TOK_LEFT_ASSIGN; }
+"+="       { return TOK_ADD_ASSIGN; }
+"-="       { return TOK_SUB_ASSIGN; }
+"*="       { return TOK_MUL_ASSIGN; }
+"/="       { return TOK_DIV_ASSIGN; }
+"%="       { return TOK_MOD_ASSIGN; }
+"&="       { return TOK_AND_ASSIGN; }
+"^="       { return TOK_XOR_ASSIGN; }
+"|="       { return TOK_OR_ASSIGN; }
+">>"       { return TOK_RIGHT_OP; }
+"<<"       { return TOK_LEFT_OP; }
+"++"       { return TOK_INC_OP; }
+"--"       { return TOK_DEC_OP; }
+"->"       { return TOK_PTR_OP; }
+"&&"       { return TOK_AND_OP; }
+"||"       { return TOK_OR_OP; }
+"<="       { return TOK_LE_OP; }
+">="       { return TOK_GE_OP; }
+"=="       { return TOK_EQ_OP; }
+"!="       { return TOK_NE_OP; }
+";"        { return(';'); }
+("{"|"<%") { return('{'); }
+("}"|"%>") { return('}'); }
+","        { return(','); }
+":"        { return(':'); }
+"="        { return('='); }
+"("        { return('('); }
+")"        { return(')'); }
+("["|"<:") { return('['); }
+("]"|":>") { return(']'); }
+"."        { return('.'); }
+"&"        { return('&'); }
+"!"        { return('!'); }
+"~"        { return('~'); }
+"-"        { return('-'); }
+"+"        { return('+'); }
+"*"        { return('*'); }
+"/"        { return('/'); }
+"%"        { return('%'); }
+"<"        { return('<'); }
+">"        { return('>'); }
+"^"        { return('^'); }
+"|"        { return('|'); }
+"?"        { return('?'); }
 
-[ \t\v\n\f]   { MCINC; }
+[ \t\v\n\f]   { }
 .             { /* todo: add code to complain about unmatched characters */ }
 
 %%
-
-static char *cpstr(const char *s)
-{
-  char *newS = NULL;
-  if (s) {
-    size_t len = strlen(s);
-    newS = (char*) malloc(len+1);
-    strncpy(newS, s, len+1);
-  }
-  return newS;
-}
 
 static void comment(yyscan_t yyscanner)
 {

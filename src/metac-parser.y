@@ -33,48 +33,60 @@
 %lex-param { void* scanner }
 %start translation_unit
 
+%{
+#include <string>
+#include <vector>
+#include <iostream>
+#include <sstream>
+#include "parser.h"
+#include "ast.h"
+%}
+
 %union
 {
-	char *strval;
+	metac::Node *node;
+	metac::Block *block;
+	metac::Expression *expr;
+	metac::Statement *stmt;
+	metac::Identifier *ident;
+	metac::VariableDeclaration *var_decl;
+	std::vector<metac::VariableDeclaration*> *varvec;
+	std::vector<metac::Expression*> *exprvec;
+	std::string *string;
 	int token;
 }
 
-%token <strval> MCTOK_IDENTIFIER
-%token <strval> MCTOK_CONSTANT
-%token <strval> MCTOK_STRING_LITERAL
-%token <token>  MCTOK_SIZEOF MCTOK_TYPEOF
-%token <token>  MCTOK_PTR_OP MCTOK_INC_OP MCTOK_DEC_OP
-%token <token>  MCTOK_LEFT_OP MCTOK_RIGHT_OP
-%token <token>  MCTOK_LE_OP MCTOK_GE_OP MCTOK_EQ_OP MCTOK_NE_OP
-%token <token>  MCTOK_AND_OP MCTOK_OR_OP
-%token <token>  MCTOK_MUL_ASSIGN MCTOK_DIV_ASSIGN MCTOK_MOD_ASSIGN
-%token <token>  MCTOK_ADD_ASSIGN MCTOK_SUB_ASSIGN
-%token <token>  MCTOK_LEFT_ASSIGN MCTOK_RIGHT_ASSIGN
-%token <token>  MCTOK_AND_ASSIGN MCTOK_XOR_ASSIGN MCTOK_OR_ASSIGN
-%token <token>  MCTOK_TYPE_NAME
-%token <token>  MCTOK_TYPEDEF MCTOK_EXTERN MCTOK_STATIC MCTOK_INLINE
-%token <token>  MCTOK_LAMBDA MCTOK_VAR
-%token <token>  MCTOK_PRIVATE MCTOK_PUBLIC
-%token <token>  MCTOK_CHAR MCTOK_SHORT MCTOK_INT MCTOK_LONG
-%token <token>  MCTOK_UCHAR MCTOK_USHORT MCTOK_UINT MCTOK_ULONG
-%token <token>  MCTOK_BOOL MCTOK_FLOAT MCTOK_DOUBLE
-%token <token>  MCTOK_CONST MCTOK_VOID
-%token <token>  MCTOK_CATCH MCTOK_THROW MCTOK_TRY MCTOK_FINALLY
-%token <token>  MCTOK_CLASS MCTOK_STRUCT MCTOK_UNION MCTOK_ENUM
-%token <token>  MCTOK_ELLIPSIS
-%token <token>  MCTOK_NULL MCTOK_TRUE MCTOK_FALSE
-%token <token>  MCTOK_NEW MCTOK_DELETE
-%token <token>  MCTOK_SWITCH MCTOK_CASE MCTOK_DEFAULT
-%token <token>  MCTOK_IF MCTOK_ELSE 
-%token <token>  MCTOK_WHILE MCTOK_DO MCTOK_FOR MCTOK_FOREACH
-%token <token>  MCTOK_GOTO MCTOK_CONTINUE MCTOK_BREAK MCTOK_RETURN
+%token <string> TOK_IDENTIFIER
+%token <string> TOK_CONSTANT
+%token <string> TOK_STRING_LITERAL
+%token <token>  TOK_SIZEOF TOK_TYPEOF
+%token <token>  TOK_PTR_OP TOK_INC_OP TOK_DEC_OP
+%token <token>  TOK_LEFT_OP TOK_RIGHT_OP
+%token <token>  TOK_LE_OP TOK_GE_OP TOK_EQ_OP TOK_NE_OP
+%token <token>  TOK_AND_OP TOK_OR_OP
+%token <token>  TOK_MUL_ASSIGN TOK_DIV_ASSIGN TOK_MOD_ASSIGN
+%token <token>  TOK_ADD_ASSIGN TOK_SUB_ASSIGN
+%token <token>  TOK_LEFT_ASSIGN TOK_RIGHT_ASSIGN
+%token <token>  TOK_AND_ASSIGN TOK_XOR_ASSIGN TOK_OR_ASSIGN
+%token <string> TOK_TYPE_NAME
+%token <token>  TOK_TYPEDEF TOK_EXTERN TOK_STATIC TOK_INLINE
+%token <token>  TOK_LAMBDA TOK_VAR
+%token <token>  TOK_PRIVATE TOK_PUBLIC
+%token <token>  TOK_CHAR TOK_SHORT TOK_INT TOK_LONG
+%token <token>  TOK_UCHAR TOK_USHORT TOK_UINT TOK_ULONG
+%token <token>  TOK_BOOL TOK_FLOAT TOK_DOUBLE
+%token <token>  TOK_CONST TOK_VOID
+%token <token>  TOK_CATCH TOK_THROW TOK_TRY TOK_FINALLY
+%token <token>  TOK_CLASS TOK_STRUCT TOK_UNION TOK_ENUM
+%token <token>  TOK_ELLIPSIS
+%token <token>  TOK_NULL TOK_TRUE TOK_FALSE
+%token <token>  TOK_NEW TOK_DELETE
+%token <token>  TOK_SWITCH TOK_CASE TOK_DEFAULT
+%token <token>  TOK_IF TOK_ELSE 
+%token <token>  TOK_WHILE TOK_DO TOK_FOR TOK_FOREACH
+%token <token>  TOK_GOTO TOK_CONTINUE TOK_BREAK TOK_RETURN
 
 %{
-
-#include <iostream>
-#include <sstream>
-#include <string>
-#include "parser.h"
 
 int Parser_lex(YYSTYPE* lvalp, YYLTYPE* llocp, void* scanner);
 
@@ -90,9 +102,9 @@ void Parser_error(YYLTYPE* locp, Parser* context, const char* err)
 %%
 
 primary_expression
-	: MCTOK_IDENTIFIER
-	| MCTOK_CONSTANT
-	| MCTOK_STRING_LITERAL
+	: TOK_IDENTIFIER
+	| TOK_CONSTANT
+	| TOK_STRING_LITERAL
 	| '(' expression ')'
 	;
 
@@ -101,10 +113,10 @@ postfix_expression
 	| postfix_expression '[' expression ']'
 	| postfix_expression '(' ')'
 	| postfix_expression '(' argument_expression_list ')'
-	| postfix_expression '.' MCTOK_IDENTIFIER
-	| postfix_expression MCTOK_PTR_OP MCTOK_IDENTIFIER
-	| postfix_expression MCTOK_INC_OP
-	| postfix_expression MCTOK_DEC_OP
+	| postfix_expression '.' TOK_IDENTIFIER
+	| postfix_expression TOK_PTR_OP TOK_IDENTIFIER
+	| postfix_expression TOK_INC_OP
+	| postfix_expression TOK_DEC_OP
 	| '(' type_name ')' '{' initializer_list '}'
 	| '(' type_name ')' '{' initializer_list ',' '}'
 	;
@@ -116,11 +128,11 @@ argument_expression_list
 
 unary_expression
 	: postfix_expression
-	| MCTOK_INC_OP unary_expression
-	| MCTOK_DEC_OP unary_expression
+	| TOK_INC_OP unary_expression
+	| TOK_DEC_OP unary_expression
 	| unary_operator cast_expression
-	| MCTOK_SIZEOF unary_expression
-	| MCTOK_SIZEOF '(' type_name ')'
+	| TOK_SIZEOF unary_expression
+	| TOK_SIZEOF '(' type_name ')'
 	;
 
 unary_operator
@@ -152,22 +164,22 @@ additive_expression
 
 shift_expression
 	: additive_expression
-	| shift_expression MCTOK_LEFT_OP additive_expression
-	| shift_expression MCTOK_RIGHT_OP additive_expression
+	| shift_expression TOK_LEFT_OP additive_expression
+	| shift_expression TOK_RIGHT_OP additive_expression
 	;
 
 relational_expression
 	: shift_expression
 	| relational_expression '<' shift_expression
 	| relational_expression '>' shift_expression
-	| relational_expression MCTOK_LE_OP shift_expression
-	| relational_expression MCTOK_GE_OP shift_expression
+	| relational_expression TOK_LE_OP shift_expression
+	| relational_expression TOK_GE_OP shift_expression
 	;
 
 equality_expression
 	: relational_expression
-	| equality_expression MCTOK_EQ_OP relational_expression
-	| equality_expression MCTOK_NE_OP relational_expression
+	| equality_expression TOK_EQ_OP relational_expression
+	| equality_expression TOK_NE_OP relational_expression
 	;
 
 and_expression
@@ -187,12 +199,12 @@ inclusive_or_expression
 
 logical_and_expression
 	: inclusive_or_expression
-	| logical_and_expression MCTOK_AND_OP inclusive_or_expression
+	| logical_and_expression TOK_AND_OP inclusive_or_expression
 	;
 
 logical_or_expression
 	: logical_and_expression
-	| logical_or_expression MCTOK_OR_OP logical_and_expression
+	| logical_or_expression TOK_OR_OP logical_and_expression
 	;
 
 conditional_expression
@@ -207,16 +219,16 @@ assignment_expression
 
 assignment_operator
 	: '='
-	| MCTOK_MUL_ASSIGN
-	| MCTOK_DIV_ASSIGN
-	| MCTOK_MOD_ASSIGN
-	| MCTOK_ADD_ASSIGN
-	| MCTOK_SUB_ASSIGN
-	| MCTOK_LEFT_ASSIGN
-	| MCTOK_RIGHT_ASSIGN
-	| MCTOK_AND_ASSIGN
-	| MCTOK_XOR_ASSIGN
-	| MCTOK_OR_ASSIGN
+	| TOK_MUL_ASSIGN
+	| TOK_DIV_ASSIGN
+	| TOK_MOD_ASSIGN
+	| TOK_ADD_ASSIGN
+	| TOK_SUB_ASSIGN
+	| TOK_LEFT_ASSIGN
+	| TOK_RIGHT_ASSIGN
+	| TOK_AND_ASSIGN
+	| TOK_XOR_ASSIGN
+	| TOK_OR_ASSIGN
 	;
 
 expression
@@ -255,38 +267,38 @@ init_declarator
 	;
 
 storage_class_specifier
-	: MCTOK_TYPEDEF
-	| MCTOK_EXTERN
-	| MCTOK_STATIC
+	: TOK_TYPEDEF
+	| TOK_EXTERN
+	| TOK_STATIC
 	;
 
 type_specifier
-	: MCTOK_VOID
-	| MCTOK_CHAR
-	| MCTOK_UCHAR
-	| MCTOK_SHORT
-	| MCTOK_USHORT
-	| MCTOK_INT
-	| MCTOK_UINT
-	| MCTOK_LONG
-	| MCTOK_ULONG
-	| MCTOK_FLOAT
-	| MCTOK_DOUBLE
-	| MCTOK_BOOL
+	: TOK_VOID
+	| TOK_CHAR
+	| TOK_UCHAR
+	| TOK_SHORT
+	| TOK_USHORT
+	| TOK_INT
+	| TOK_UINT
+	| TOK_LONG
+	| TOK_ULONG
+	| TOK_FLOAT
+	| TOK_DOUBLE
+	| TOK_BOOL
 	| struct_or_union_specifier
 	| enum_specifier
-	| MCTOK_TYPE_NAME
+	| TOK_TYPE_NAME
 	;
 
 struct_or_union_specifier
-	: struct_or_union MCTOK_IDENTIFIER '{' struct_declaration_list '}'
+	: struct_or_union TOK_IDENTIFIER '{' struct_declaration_list '}'
 	| struct_or_union '{' struct_declaration_list '}'
-	| struct_or_union MCTOK_IDENTIFIER
+	| struct_or_union TOK_IDENTIFIER
 	;
 
 struct_or_union
-	: MCTOK_STRUCT
-	| MCTOK_UNION
+	: TOK_STRUCT
+	| TOK_UNION
 	;
 
 struct_declaration_list
@@ -317,11 +329,11 @@ struct_declarator
 	;
 
 enum_specifier
-	: MCTOK_ENUM '{' enumerator_list '}'
-	| MCTOK_ENUM MCTOK_IDENTIFIER '{' enumerator_list '}'
-	| MCTOK_ENUM '{' enumerator_list ',' '}'
-	| MCTOK_ENUM MCTOK_IDENTIFIER '{' enumerator_list ',' '}'
-	| MCTOK_ENUM MCTOK_IDENTIFIER
+	: TOK_ENUM '{' enumerator_list '}'
+	| TOK_ENUM TOK_IDENTIFIER '{' enumerator_list '}'
+	| TOK_ENUM '{' enumerator_list ',' '}'
+	| TOK_ENUM TOK_IDENTIFIER '{' enumerator_list ',' '}'
+	| TOK_ENUM TOK_IDENTIFIER
 	;
 
 enumerator_list
@@ -330,16 +342,16 @@ enumerator_list
 	;
 
 enumerator
-	: MCTOK_IDENTIFIER
-	| MCTOK_IDENTIFIER '=' constant_expression
+	: TOK_IDENTIFIER
+	| TOK_IDENTIFIER '=' constant_expression
 	;
 
 type_qualifier
-	: MCTOK_CONST
+	: TOK_CONST
 	;
 
 function_specifier
-	: MCTOK_INLINE
+	: TOK_INLINE
 	;
 
 declarator
@@ -349,13 +361,13 @@ declarator
 
 
 direct_declarator
-	: MCTOK_IDENTIFIER
+	: TOK_IDENTIFIER
 	| '(' declarator ')'
 	| direct_declarator '[' type_qualifier_list assignment_expression ']'
 	| direct_declarator '[' type_qualifier_list ']'
 	| direct_declarator '[' assignment_expression ']'
-	| direct_declarator '[' MCTOK_STATIC type_qualifier_list assignment_expression ']'
-	| direct_declarator '[' type_qualifier_list MCTOK_STATIC assignment_expression ']'
+	| direct_declarator '[' TOK_STATIC type_qualifier_list assignment_expression ']'
+	| direct_declarator '[' type_qualifier_list TOK_STATIC assignment_expression ']'
 	| direct_declarator '[' type_qualifier_list '*' ']'
 	| direct_declarator '[' '*' ']'
 	| direct_declarator '[' ']'
@@ -379,7 +391,7 @@ type_qualifier_list
 
 parameter_type_list
 	: parameter_list
-	| parameter_list ',' MCTOK_ELLIPSIS
+	| parameter_list ',' TOK_ELLIPSIS
 	;
 
 parameter_list
@@ -394,8 +406,8 @@ parameter_declaration
 	;
 
 identifier_list
-	: MCTOK_IDENTIFIER
-	| identifier_list ',' MCTOK_IDENTIFIER
+	: TOK_IDENTIFIER
+	| identifier_list ',' TOK_IDENTIFIER
 	;
 
 type_name
@@ -447,7 +459,7 @@ designator_list
 
 designator
 	: '[' constant_expression ']'
-	| '.' MCTOK_IDENTIFIER
+	| '.' TOK_IDENTIFIER
 	;
 
 statement
@@ -460,9 +472,9 @@ statement
 	;
 
 labeled_statement
-	: MCTOK_IDENTIFIER ':' statement
-	| MCTOK_CASE constant_expression ':' statement
-	| MCTOK_DEFAULT ':' statement
+	: TOK_IDENTIFIER ':' statement
+	| TOK_CASE constant_expression ':' statement
+	| TOK_DEFAULT ':' statement
 	;
 
 compound_statement
@@ -486,26 +498,26 @@ expression_statement
 	;
 
 selection_statement
-	: MCTOK_IF '(' expression ')' statement
-	| MCTOK_IF '(' expression ')' statement MCTOK_ELSE statement
-	| MCTOK_SWITCH '(' expression ')' statement
+	: TOK_IF '(' expression ')' statement
+	| TOK_IF '(' expression ')' statement TOK_ELSE statement
+	| TOK_SWITCH '(' expression ')' statement
 	;
 
 iteration_statement
-	: MCTOK_WHILE '(' expression ')' statement
-	| MCTOK_DO statement MCTOK_WHILE '(' expression ')' ';'
-	| MCTOK_FOR '(' expression_statement expression_statement ')' statement
-	| MCTOK_FOR '(' expression_statement expression_statement expression ')' statement
-	| MCTOK_FOR '(' declaration expression_statement ')' statement
-	| MCTOK_FOR '(' declaration expression_statement expression ')' statement
+	: TOK_WHILE '(' expression ')' statement
+	| TOK_DO statement TOK_WHILE '(' expression ')' ';'
+	| TOK_FOR '(' expression_statement expression_statement ')' statement
+	| TOK_FOR '(' expression_statement expression_statement expression ')' statement
+	| TOK_FOR '(' declaration expression_statement ')' statement
+	| TOK_FOR '(' declaration expression_statement expression ')' statement
 	;
 
 jump_statement
-	: MCTOK_GOTO MCTOK_IDENTIFIER ';'
-	| MCTOK_CONTINUE ';'
-	| MCTOK_BREAK ';'
-	| MCTOK_RETURN ';'
-	| MCTOK_RETURN expression ';'
+	: TOK_GOTO TOK_IDENTIFIER ';'
+	| TOK_CONTINUE ';'
+	| TOK_BREAK ';'
+	| TOK_RETURN ';'
+	| TOK_RETURN expression ';'
 	;
 
 translation_unit
