@@ -37,8 +37,7 @@ public:
 
 public:
 
-  Parser(std::istream *is = &std::cin) {
-    this->inStream = is;
+  Parser(std::istream *is = &std::cin) : inStream(is) {
     init_scanner();
   }
 
@@ -48,7 +47,7 @@ public:
 
 protected:
 
-  /* Defined in metac-scanner.l */
+  /* Defined in the scanner */
   void init_scanner();
   void destroy_scanner();
 

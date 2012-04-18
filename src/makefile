@@ -2,9 +2,25 @@
 # Make file for Meta C lexer
 #
 
-CC = g++
-LEX = flex
-YACC = bison
+#------------------------------------#
+# Utilities and Variable definitions #
+#------------------------------------#
+
+ifndef CC
+  CC = clang
+endif
+
+ifndef CXX
+  CXX = clang
+endif
+
+ifndef LEX
+  LEX = flex
+endif
+
+ifndef YACC
+  YACC = bison
+endif
 
 ifdef DEBUG
 	debug_flags = -g -Wall -Werror -Wextra -Wno-unused-parameter -UNDEBUG -DEBUG=1
@@ -12,34 +28,71 @@ else
 	debug_flags = -O2 -DNDEBUG=1 -UDEBUG
 endif
 
-ifdef CFLAGS
-	compile_flags = $(CFLAGS)
-else
-	compile_flags =
-endif
+compile_flags = $(CFLAGS) $(debug_flags)
+link_flags = $(LDFLAGS) -ll -ly -lstdc++
 
-ifdef LDFLAGS
-	link_flags = $(LDFLAGS) -ll -ly
-else
-	link_flags = -ll -ly
-endif
+# Plain C
+c_sources = $(wildcard *.c)
+c_objects = $(c_sources:.c=.oc)
 
-sources = $(wildcard *.cpp) gen-scanner.cpp gen-parser.cpp
-headers = $(wildcard *.h) gen-parser.hpp
+# Normal C++
+cpp_sources = $(wildcard *.cpp)
+cpp_objects = $(cpp_sources:.cpp=.ocpp)
 
-metacc: $(sources) $(headers)
-	$(CC) $(debug_flags) -o $@ $(compile_flags) $^ $(link_flags)
+# Generated C/C++
+cc_sources = gen-parser.cc gen-scanner.cc
+cc_objects = $(cc_sources:.cc=.occ)
 
-gen-scanner.cpp: metac-scanner.l
+
+#--------------------------#
+# Compilation and linking  #
+#--------------------------#
+
+# Link objects together (implicit first/default rule)
+metacc: $(c_objects) $(cpp_objects) $(cc_objects)
+	$(CC) -o $@ $^ $(link_flags)
+
+# Compile all the sources into objects
+%.oc: %.c
+	$(CC) -c $(compile_flags) -o $@ $<
+
+%.ocpp: %.cpp
+	$(CXX) -c $(compile_flags) -o $@ $<
+
+%.occ: %.cc
+	$(CXX) -c $(compile_flags) -o $@ $<
+
+#-------------------#
+# Generated sources #
+#-------------------#
+
+# Flex scanner/tokenizer
+gen-scanner.cc: metac-scanner.l
 	$(LEX) -o $@ $<
 
-gen-parser.hpp: gen-parser.cpp
+# Bison parser heaser
+gen-parser.hh: gen-parser.cc
+#   do nothing, just declare dependency
 
-gen-parser.cpp: metac-parser.y
+# Bison parser source code
+gen-parser.cc: metac-parser.y
 	$(YACC) -o $@ $<
 
+#-------------#
+# Other stuff #
+#-------------#
+
+# Clean built files
 clean:
-	rm -f metac-lexer gen-*.cpp gen-*.hpp *.o
+	rm -f metac-lexer gen-*.cc gen-*.hh *.oc *.occ *.ocpp
 	rm -rf *.dSYM
+
+# Future: install binary and related files
+
+# Future: uninstall binary and related files
+
+# Future: build a tarball for distribution
+
+# Future: Delete this file and use Autotools
 
 .PHONY: clean

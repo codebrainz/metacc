@@ -32,10 +32,19 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-	cout << "Starting parsing..." << endl;
-	ifstream inStream("test.c", ifstream::in);
-	Parser parser(&inStream);
-	cout << "Created parsing context." << endl;
-	int rc = Parser_parse(&parser);
-	cout << "Parse result: " << rc << endl;
+	if (argc < 2) {
+		cerr << "metac: not enough arguments, expecting one" << endl;
+		return 1;
+	}
+
+	ifstream inStream(argv[1], ifstream::in);
+
+	if (!inStream.is_open()) {
+		cerr << "metac: unable to open file: " << "test.mc" << endl;
+		return 0;
+	} else {
+		Parser parser(&inStream);
+		return Parser_parse(&parser);
+	}
+
 }

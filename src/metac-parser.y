@@ -35,13 +35,13 @@
 
 %union
 {
-	char *string;
+	char *strval;
 	int token;
 }
 
-%token <string> MCTOK_IDENTIFIER
-%token <double> MCTOK_CONSTANT
-%token <string> MCTOK_STRING_LITERAL
+%token <strval> MCTOK_IDENTIFIER
+%token <strval> MCTOK_CONSTANT
+%token <strval> MCTOK_STRING_LITERAL
 %token <token>  MCTOK_SIZEOF MCTOK_TYPEOF
 %token <token>  MCTOK_PTR_OP MCTOK_INC_OP MCTOK_DEC_OP
 %token <token>  MCTOK_LEFT_OP MCTOK_RIGHT_OP
@@ -73,6 +73,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <string>
 #include "parser.h"
 
 int Parser_lex(YYSTYPE* lvalp, YYLTYPE* llocp, void* scanner);

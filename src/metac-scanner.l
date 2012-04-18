@@ -40,32 +40,30 @@ IS    ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
 %option bison-bridge
 %option bison-locations
 %option prefix="Parser_"
-%option always-interactive
 
 %{
 
+#include <string>
 #include "parser.h"
-#include "gen-parser.hpp"
+#include "gen-parser.hh"
 
 #define YY_EXTRA_TYPE Parser*
 #define YY_USER_ACTION yylloc->first_line = yylineno;
 
 #define YY_INPUT(buf, result, max_size) \
 { \
-  char c; \
-  (*yyextra->inStream) >> c; \
-  if(yyextra->inStream->eof()) { \
-     result = YY_NULL; \
+  if (yyextra->inStream->eof()) { \
+    result = YY_NULL; \
   } else { \
-     buf[0] = c; \
-     result = 1; \
+    yyextra->inStream->get(buf, max_size, '\0'); \
+    result = yyextra->inStream->gcount(); \
   } \
 }
 
 static void comment(yyscan_t yyscanner);
-static char *copy_string(const char *s);
+static char *cpstr(const char *s);
 
-#define MCSETSTR yylval->string = copy_string(yytext)
+#define MCSETSTR yylval->strval = cpstr(yytext)
 #define MCINC {}
 
 %}
@@ -74,7 +72,7 @@ static char *copy_string(const char *s);
 
 "//"[^\n]* { MCINC; /* consume C++-style comments */ }
 "/*"       { MCINC; comment(yyscanner); }
-^"#"[^\n]  { MCINC; /* consume #pragma, #line, etc. */ }
+^"#"[^\n]+ { MCINC; /* consume directives */ }
 
 "bool"     { MCINC; return MCTOK_BOOL; }
 "break"    { MCINC; return MCTOK_BREAK; }
@@ -197,7 +195,7 @@ L?\"(\\.|[^\\"\n])*\" { MCINC; MCSETSTR; return(MCTOK_STRING_LITERAL); }
 
 %%
 
-static char *copy_string(const char *s)
+static char *cpstr(const char *s)
 {
   char *newS = NULL;
   if (s) {
@@ -210,10 +208,9 @@ static char *copy_string(const char *s)
 
 static void comment(yyscan_t yyscanner)
 {
-  int c, prev = 0;
+  char c, prev = 0;
 
   while ((c = yyinput(yyscanner)) != 0) {
-
     if (prev == '*' && c == '/') {
       return;
     }
