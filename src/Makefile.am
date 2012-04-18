@@ -9,7 +9,6 @@ gen-scanner.cc: metac-scanner.l gen-parser.hh
 	$(LEX) -o $@ $<
 
 gen-parser.hh: gen-parser.cc
-	$(YACC) -o $@ $<
 
 gen-parser.cc: metac-parser.y
 	$(YACC) -o $@ $<
