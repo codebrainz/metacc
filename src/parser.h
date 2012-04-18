@@ -29,6 +29,8 @@
 
 #include <iostream>
 
+namespace metac {
+
 class Parser {
 
 public:
@@ -53,6 +55,8 @@ protected:
 
 };
 
-int Parser_parse(Parser* context);
+} /* namespace metac */
+
+int Parser_parse(metac::Parser* context);
 
 #endif /* METAC_PARSER_H */

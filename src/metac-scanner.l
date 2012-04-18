@@ -48,7 +48,7 @@ IS    ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
 #include "ast.h"
 #include "gen-parser.hh"
 
-#define YY_EXTRA_TYPE Parser*
+#define YY_EXTRA_TYPE metac::Parser*
 #define YY_USER_ACTION yylloc->first_line = yylineno;
 
 #define YY_INPUT(buf, result, max_size) \
@@ -62,7 +62,6 @@ IS    ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
 }
 
 static void comment(yyscan_t yyscanner);
-
 #define MCSETSTR yylval->string = new std::string(yytext)
 
 %}
@@ -73,57 +72,57 @@ static void comment(yyscan_t yyscanner);
 "/*"       { comment(yyscanner); }
 ^"#"[^\n]+ { /* consume directives */ }
 
-"bool"     { return TOK_BOOL; }
-"break"    { return TOK_BREAK; }
-"case"     { return TOK_CASE; }
-"catch"    { return TOK_CATCH; }
-"char"     { return TOK_CHAR; }
-"class"    { return TOK_CLASS; }
-"const"    { return TOK_CONST; }
-"continue" { return TOK_CONTINUE; }
-"default"  { return TOK_DEFAULT; }
-"delete"   { return TOK_DELETE; }
-"do"       { return TOK_DO; }
-"double"   { return TOK_DOUBLE; }
-"else"     { return TOK_ELSE; }
-"enum"     { return TOK_ENUM; }
-"extern"   { return TOK_EXTERN; }
-"false"    { return TOK_FALSE; }
-"finally"  { return TOK_FINALLY; }
-"float"    { return TOK_FLOAT; }
-"for"      { return TOK_FOR; }
-"foreach"  { return TOK_FOREACH; }
-"goto"     { return TOK_GOTO; }
-"if"       { return TOK_IF; }
-"inline"   { return TOK_INLINE; }
-"int"      { return TOK_INT; }
-"lambda"   { return TOK_LAMBDA; }
-"long"     { return TOK_LONG; }
-"new"      { return TOK_NEW; }
-"null"     { return TOK_NULL; }
-"return"   { return TOK_RETURN; }
-"private"  { return TOK_PRIVATE; }
-"public"   { return TOK_PUBLIC; }
-"short"    { return TOK_SHORT; }
-"sizeof"   { return TOK_SIZEOF; }
-"static"   { return TOK_STATIC; }
-"struct"   { return TOK_STRUCT; }
-"switch"   { return TOK_SWITCH; }
-"throw"    { return TOK_THROW; }
-"true"     { return TOK_TRUE; }
-"try"      { return TOK_TRY; }
-"typedef"  { return TOK_TYPEDEF; }
-"typeof"   { return TOK_TYPEOF; }
-"uchar"    { return TOK_UCHAR; }
-"uint"     { return TOK_UINT; }
-"ulong"    { return TOK_ULONG; }
-"ushort"   { return TOK_USHORT; }
-"union"    { return TOK_UNION; }
-"var"      { return TOK_VAR; }
-"void"     { return TOK_VOID; }
-"while"    { return TOK_WHILE; }
+"bool"     { return(TOK_BOOL); }
+"break"    { return(TOK_BREAK); }
+"case"     { return(TOK_CASE); }
+"catch"    { return(TOK_CATCH); }
+"char"     { return(TOK_CHAR); }
+"class"    { return(TOK_CLASS); }
+"const"    { return(TOK_CONST); }
+"continue" { return(TOK_CONTINUE); }
+"default"  { return(TOK_DEFAULT); }
+"delete"   { return(TOK_DELETE); }
+"do"       { return(TOK_DO); }
+"double"   { return(TOK_DOUBLE); }
+"else"     { return(TOK_ELSE); }
+"enum"     { return(TOK_ENUM); }
+"extern"   { return(TOK_EXTERN); }
+"false"    { return(TOK_FALSE); }
+"finally"  { return(TOK_FINALLY); }
+"float"    { return(TOK_FLOAT); }
+"for"      { return(TOK_FOR); }
+"foreach"  { return(TOK_FOREACH); }
+"goto"     { return(TOK_GOTO); }
+"if"       { return(TOK_IF); }
+"inline"   { return(TOK_INLINE); }
+"int"      { return(TOK_INT); }
+"lambda"   { return(TOK_LAMBDA); }
+"long"     { return(TOK_LONG); }
+"new"      { return(TOK_NEW); }
+"null"     { return(TOK_NULL); }
+"return"   { return(TOK_RETURN); }
+"private"  { return(TOK_PRIVATE); }
+"public"   { return(TOK_PUBLIC); }
+"short"    { return(TOK_SHORT); }
+"sizeof"   { return(TOK_SIZEOF); }
+"static"   { return(TOK_STATIC); }
+"struct"   { return(TOK_STRUCT); }
+"switch"   { return(TOK_SWITCH); }
+"throw"    { return(TOK_THROW); }
+"true"     { return(TOK_TRUE); }
+"try"      { return(TOK_TRY); }
+"typedef"  { return(TOK_TYPEDEF); }
+"typeof"   { return(TOK_TYPEOF); }
+"uchar"    { return(TOK_UCHAR); }
+"uint"     { return(TOK_UINT); }
+"ulong"    { return(TOK_ULONG); }
+"ushort"   { return(TOK_USHORT); }
+"union"    { return(TOK_UNION); }
+"var"      { return(TOK_VAR); }
+"void"     { return(TOK_VOID); }
+"while"    { return(TOK_WHILE); }
 
-{L}({L}|{D})* { MCSETSTR; return TOK_IDENTIFIER; }
+{L}({L}|{D})* { MCSETSTR; return(TOK_IDENTIFIER); }
 
 0[xX]{H}+{IS}?             { MCSETSTR; return(TOK_CONSTANT); }
 0[0-7]*{IS}?               { MCSETSTR; return(TOK_CONSTANT); }
@@ -142,28 +141,28 @@ L?'(\\.|[^\\'\n])+'        { MCSETSTR; return(TOK_CONSTANT); }
 
 L?\"(\\.|[^\\"\n])*\" { MCSETSTR; return(TOK_STRING_LITERAL); }
 
-"..."      { return TOK_ELLIPSIS; }
-">>="      { return TOK_RIGHT_ASSIGN; }
-"<<="      { return TOK_LEFT_ASSIGN; }
-"+="       { return TOK_ADD_ASSIGN; }
-"-="       { return TOK_SUB_ASSIGN; }
-"*="       { return TOK_MUL_ASSIGN; }
-"/="       { return TOK_DIV_ASSIGN; }
-"%="       { return TOK_MOD_ASSIGN; }
-"&="       { return TOK_AND_ASSIGN; }
-"^="       { return TOK_XOR_ASSIGN; }
-"|="       { return TOK_OR_ASSIGN; }
-">>"       { return TOK_RIGHT_OP; }
-"<<"       { return TOK_LEFT_OP; }
-"++"       { return TOK_INC_OP; }
-"--"       { return TOK_DEC_OP; }
-"->"       { return TOK_PTR_OP; }
-"&&"       { return TOK_AND_OP; }
-"||"       { return TOK_OR_OP; }
-"<="       { return TOK_LE_OP; }
-">="       { return TOK_GE_OP; }
-"=="       { return TOK_EQ_OP; }
-"!="       { return TOK_NE_OP; }
+"..."      { return(TOK_ELLIPSIS); }
+">>="      { return(TOK_RIGHT_ASSIGN); }
+"<<="      { return(TOK_LEFT_ASSIGN); }
+"+="       { return(TOK_ADD_ASSIGN); }
+"-="       { return(TOK_SUB_ASSIGN); }
+"*="       { return(TOK_MUL_ASSIGN); }
+"/="       { return(TOK_DIV_ASSIGN); }
+"%="       { return(TOK_MOD_ASSIGN); }
+"&="       { return(TOK_AND_ASSIGN); }
+"^="       { return(TOK_XOR_ASSIGN); }
+"|="       { return(TOK_OR_ASSIGN); }
+">>"       { return(TOK_RIGHT_OP); }
+"<<"       { return(TOK_LEFT_OP); }
+"++"       { return(TOK_INC_OP); }
+"--"       { return(TOK_DEC_OP); }
+"->"       { return(TOK_PTR_OP); }
+"&&"       { return(TOK_AND_OP); }
+"||"       { return(TOK_OR_OP); }
+"<="       { return(TOK_LE_OP); }
+">="       { return(TOK_GE_OP); }
+"=="       { return(TOK_EQ_OP); }
+"!="       { return(TOK_NE_OP); }
 ";"        { return(';'); }
 ("{"|"<%") { return('{'); }
 ("}"|"%>") { return('}'); }
@@ -189,7 +188,7 @@ L?\"(\\.|[^\\"\n])*\" { MCSETSTR; return(TOK_STRING_LITERAL); }
 "|"        { return('|'); }
 "?"        { return('?'); }
 
-[ \t\v\n\f]   { }
+[ \t\v\n\f]   { /* consume whitespace */ }
 .             { /* todo: add code to complain about unmatched characters */ }
 
 %%
@@ -208,12 +207,12 @@ static void comment(yyscan_t yyscanner)
   /* fixme: Parser_error("unterminated comment"); */
 }
 
-void Parser::init_scanner()
+void metac::Parser::init_scanner()
 {
   yylex_init_extra(this, &scanner);
 }
 
-void Parser::destroy_scanner()
+void metac::Parser::destroy_scanner()
 {
   yylex_destroy(scanner);
 }

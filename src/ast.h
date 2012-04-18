@@ -5,8 +5,7 @@
 #include <vector>
 #include <string>
 
-namespace metac
-{
+namespace metac {
 
 class CodeGenContext;
 class Statement;

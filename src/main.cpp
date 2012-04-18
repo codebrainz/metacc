@@ -29,6 +29,7 @@
 #include "parser.h"
 
 using namespace std;
+using namespace metac;
 
 int main(int argc, char *argv[])
 {

@@ -29,7 +29,7 @@
 %locations
 %defines
 %error-verbose
-%parse-param { Parser *context }
+%parse-param { metac::Parser *context }
 %lex-param { void* scanner }
 %start translation_unit
 
@@ -90,7 +90,7 @@
 
 int Parser_lex(YYSTYPE* lvalp, YYLTYPE* llocp, void* scanner);
 
-void Parser_error(YYLTYPE* locp, Parser* context, const char* err)
+void Parser_error(YYLTYPE* locp, metac::Parser* context, const char* err)
 {
 	std::cout << "metac:" << locp->first_line << ": " << err << std::endl;
 }
