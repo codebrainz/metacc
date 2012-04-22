@@ -1,0 +1,17 @@
+*.[oa]
+*.so
+*.la
+*.lo
+.deps/
+.libs/
+Makefile
+Makefile.in
+/aclocal.m4
+/autom4te.cache/
+/build-aux/
+/m4/
+/config.*
+/configure
+/src/gen-*.*
+/src/metac-config.h*
+/src/stamp-h1
