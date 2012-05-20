@@ -1,0 +1,31 @@
+# Compiled
+*.[oa]
+*.so
+*.la
+*.lo
+*.lib
+*.dll
+*.dylib
+/src/metacc
+
+# AutoTools
+/build-aux/
+/m4/
+/autom4te.cache/
+/*.m4
+/config.*
+/configure
+/libtool
+.libs/
+.deps/
+stamp-h1
+Makefile
+Makefile.in
+/antlr/*config.h.in*
+/metacc-0.1/
+/metacc-0.1.tar.*
+
+# ANTLR-Generated
+/src/MetaCLexer.*
+/src/MetaCParser.*
+/src/*.tokens
